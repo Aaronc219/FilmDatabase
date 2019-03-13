@@ -1,0 +1,56 @@
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Scanner;
+import oracle.jdbc.*;
+import oracle.xdb.XMLType;
+
+/**
+ *
+ * @author piyush
+ */
+public class FilmDB 
+{
+    public static void main(String[] args) 
+    {
+
+    try 
+    {
+      Class.forName ("oracle.jdbc.driver.OracleDriver");
+    } 
+    catch (ClassNotFoundException e) 
+    {
+        System.out.println ("Could not load the driver"); 
+    }
+    try (                                     
+            Connection conn = DriverManager.getConnection
+            ("jdbc:oracle:thin:@localhost:1521:orcl", "SYSTEM", "Labuser1");                     
+            
+        Statement stmt = conn.createStatement();      
+       )
+       {
+            conn.setAutoCommit(false);
+            stmt.executeUpdate("DROP TABLE ASS2_FILM");
+            stmt.executeUpdate("CREATE TABLE ASS2_FILM(Fnum INT IDENTITY(1,1) " +
+                               "Film SYS.XMLTYPE) " +
+                                "PRIMARY KEY(Fnum))");
+            
+            FileInputStream fis = new FileInputStream("C:\\Users\\aaron\\Documents\\COM345\\film.xml");
+            XMLType xmlv2 = new XMLType(conn, fis);
+
+            String sqltxt = "INSERT INTO ASS2_FILM VALUES(?)";
+
+            OraclePreparedStatement ops = (OraclePreparedStatement) conn.prepareStatement(sqltxt);
+            ops.setObject(1, xmlv2);
+            ops.execute();
+       }
+       catch (SQLException | FileNotFoundException exc) 
+       {
+           exc.printStackTrace(System.err);
+       }
+    }
+}
