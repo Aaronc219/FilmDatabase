@@ -34,23 +34,105 @@ public class FilmDB
        )
        {
             conn.setAutoCommit(false);
-            stmt.executeUpdate("DROP TABLE ASS2_FILM");
-            stmt.executeUpdate("CREATE TABLE ASS2_FILM(Fnum INT IDENTITY(1,1) " +
-                               "Film SYS.XMLTYPE) " +
-                                "PRIMARY KEY(Fnum))");
+            stmt.executeUpdate("  BEGIN\n" +
+                               "      EXECUTE IMMEDIATE 'DROP TABLE ASS2_FILM';\n" +
+                               "  EXCEPTION\n" +
+                               "      WHEN OTHERS THEN NULL;\n" +
+                               "  END;");
+            stmt.executeUpdate("CREATE TABLE ASS2_FILM(Fnum INT PRIMARY KEY, " + " Film SYS.XMLTYPE)");
             
             FileInputStream fis = new FileInputStream("C:\\Users\\aaron\\Documents\\COM345\\film.xml");
-            XMLType xmlv2 = new XMLType(conn, fis);
+            XMLType xmlv1 = new XMLType(conn, fis);
 
-            String sqltxt = "INSERT INTO ASS2_FILM VALUES(?)";
+            String sqltxt = "INSERT INTO ASS2_FILM VALUES(?,?)";
 
             OraclePreparedStatement ops = (OraclePreparedStatement) conn.prepareStatement(sqltxt);
-            ops.setObject(1, xmlv2);
+            ops.setInt(1, 1);
+            ops.setObject(2, xmlv1);
             ops.execute();
+            
+            FileInputStream fis2 = new FileInputStream("C:\\Users\\aaron\\Documents\\COM345\\film2.xml");
+            XMLType xmlv2 = new XMLType(conn, fis2);
+
+            String sqltxt2 = "INSERT INTO ASS2_FILM VALUES(?,?)";
+
+            OraclePreparedStatement ops2 = (OraclePreparedStatement) conn.prepareStatement(sqltxt2);
+            ops2.setInt(1, 2);
+            ops2.setObject(2, xmlv2);
+            ops2.execute();
+            
+            FileInputStream fis3 = new FileInputStream("C:\\Users\\aaron\\Documents\\COM345\\film3.xml");
+            XMLType xmlv3 = new XMLType(conn, fis3);
+
+            String sqltxt3 = "INSERT INTO ASS2_FILM VALUES(?,?)";
+
+            OraclePreparedStatement ops3 = (OraclePreparedStatement) conn.prepareStatement(sqltxt3);
+            ops3.setInt(1, 3);
+            ops3.setObject(2, xmlv3);
+            ops3.execute();
+            
+            FileInputStream fis4 = new FileInputStream("C:\\Users\\aaron\\Documents\\COM345\\film4.xml");
+            XMLType xmlv4 = new XMLType(conn, fis4);
+
+            String sqltxt4 = "INSERT INTO ASS2_FILM VALUES(?,?)";
+
+            OraclePreparedStatement ops4 = (OraclePreparedStatement) conn.prepareStatement(sqltxt4);
+            ops4.setInt(1, 4);
+            ops4.setObject(2, xmlv4);
+            ops4.execute();
+            
+            ResultSet r1 = stmt.executeQuery("SELECT a.Film.getClobval() " +
+                                        "FROM ASS2_FILM a WHERE fnum < 5");
+            System.out.println("\n Results as Clob: \n");
+            while(r1.next())
+               System.out.println(r1.getString(1)); //Returns the results as a clob
+            
+            ResultSet r2 = stmt.executeQuery("SELECT a.Film.extract('/film/title').getStringVal() FROM ASS2_FILM a");
+            System.out.println("\n Titles: \n");
+            while (r2.next()) 
+                System.out.println(r2.getString(1)); //Displays each title
+            
+            ResultSet r3 = stmt.executeQuery("SELECT a.Film.extract('/film/title/text()').getStringVal() FROM ASS2_FILM a");
+            System.out.println("\n Titles without tags: \n");
+            while (r3.next()) 
+                System.out.println(r3.getString(1)); //Displays each title without <title> tags
+            
+            ResultSet r4 = stmt.executeQuery("SELECT a.Film.extract('/film/cast/performer/actor') FROM ASS2_FILM a " + 
+                                                "WHERE a.Film.existsNode('/film[title=\"The Godfather\"]') = 1");
+            System.out.println("\n Actors who appear in The Godfather: \n");
+            while (r4.next())
+                System.out.println(r4.getString(1)); //Displays the actors that appear in The Godfather
+            
+            ResultSet r5 = stmt.executeQuery("SELECT a.Film.extract('/film/title') FROM ASS2_FILM a " + 
+                                                "WHERE a.Film.existsNode('/film/genres[genre=\"Crime\"]') = 1");
+            System.out.println("\n Crime Films: \n");
+            while (r5.next())
+                System.out.println(r5.getString(1)); //Displays the title and the year of all crime films
+            
+            ResultSet r6 = stmt.executeQuery("SELECT a.Film.extract('/film/title') FROM ASS2_FILM a " + 
+                                                "WHERE a.Film.existsNode('/film/cast/performer[actor=\"Marlon Brando\"]') = 1");
+            System.out.println("\n Films Marlon Brando has acted in: \n");
+            while (r6.next())
+                System.out.println(r6.getString(1)); //Displays the title and year of all the films Marlon Brando has acted in
+            
+            ResultSet r7 = stmt.executeQuery("SELECT a.Film.extract('/film/title') FROM ASS2_FILM a " + 
+                                                "WHERE a.Film.existsNode('/film/directors/director[2]') = 0");
+            System.out.println("\n Films with 1 director: \n");
+            while (r7.next())
+                System.out.println(r7.getString(1)); //Displays all films with 1 director
+            
+            ResultSet r8 = stmt.executeQuery("SELECT a.Film.extract('/film/title') FROM ASS2_FILM a " + 
+                                                "WHERE a.Film.existsNode('/film/directors/director[2]') = 1");
+            System.out.println("\n Films with more than 1 director: \n");
+            while (r8.next())
+                System.out.println(r8.getString(1)); //Displays all films with more than 1 director
+            
+            stmt.close();
+            conn.close();
        }
        catch (SQLException | FileNotFoundException exc) 
        {
            exc.printStackTrace(System.err);
-       }
+       }   
     }
 }
